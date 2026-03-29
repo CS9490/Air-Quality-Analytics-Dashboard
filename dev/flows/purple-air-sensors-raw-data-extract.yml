@@ -1,0 +1,115 @@
+id: purple-air-sensors-raw-data-extract
+namespace: dashboard_raw_data
+
+description: This flow will use the PurpleAir API and extract the sensors from a geographic box which includes NYC, as well as parts of NJ, Long Island, Upstate NY, etc. The data needs to be further cleaned later down the line, but the goal here is to extract the raw data now, and do cleaning later.
+
+variables:
+  # Use the execution start time to build the object name
+  # NOTE: America/New_York will switch between EST and EDT automatically.
+  gcs_file: "{{ 'gs://' ~ kv('GCP_BUCKET_NAME') ~ '/airquality_' ~ (execution.startDate | date(\"MM_dd_yyyy'_T_'HH\", timeZone=\"America/New_York\")) ~ '.csv' }}"
+
+triggers:
+  - id: hourly_on_the_dot
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 * * * *"
+    timezone: "America/New_York"
+
+tasks:
+  - id: collect_stats
+    type: io.kestra.plugin.scripts.python.Script
+    outputFiles:
+      - "*.csv"
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: python:slim
+    dependencies:
+      - requests
+      - kestra
+      - polars
+      - httpx
+    script: |
+      from kestra import Kestra
+      import polars as pl
+      import httpx
+      from datetime import datetime, timezone
+      from zoneinfo import ZoneInfo
+      
+      file_name = "airquality_pull.csv"
+      api_key = '{{ kv('PURPLE_AIR_API_KEY') }}'
+
+      params = {
+        "api_key": api_key,
+        # Keep aligned with the schema you plan to land in GCS + model in BigQuery/dbt.
+        # (Dots in field names like pm2.5_atm are fine for the API call; we normalize dots to underscores before writing the CSV.)
+        "fields": (
+          "sensor_index,name,latitude,longitude,altitude,"
+          "location_type,private,position_rating,"
+          "last_seen,last_modified,date_created,"
+          "channel_state,channel_flags,channel_flags_manual,channel_flags_auto,"
+          "confidence,confidence_manual,confidence_auto,"
+          "pm1.0_atm,pm2.5_atm,pm2.5_atm_a,pm2.5_atm_b,pm2.5_alt,pm10.0_atm,"
+          "humidity,temperature,pressure,"
+          "rssi,uptime,pa_latency"
+        ),
+        "max_age": 0,
+        "nwlat": 40.962891,
+        "nwlng": -74.264395,
+        "selat": 40.470116,
+        "selng": -73.675450,
+      }
+
+      response = httpx.get(
+        "https://api.purpleair.com/v1/sensors",
+        params=params,
+        timeout=60,
+      )
+      response.raise_for_status()
+      sensors_json = response.json()
+
+      raw_sensors_df = pl.DataFrame(
+        data=sensors_json.get("data", []),
+        schema=sensors_json.get("fields", []),
+        orient="row",
+      )
+
+      # Save the following filters for BigQuery
+
+      # if "position_rating" in raw_sensors_df.columns:
+      #   raw_sensors_df = raw_sensors_df.filter(pl.col("position_rating") > 0)
+      # if "location_type" in raw_sensors_df.columns:
+      #   raw_sensors_df = raw_sensors_df.filter(pl.col("location_type") != 1)
+      # if "last_seen" in raw_sensors_df.columns:
+      #   raw_sensors_df = raw_sensors_df.with_columns(
+      #     pl.from_epoch(pl.col("last_seen"), time_unit="s").alias("last_seen")
+      #   )
+
+      pulled_at_est = datetime.now(ZoneInfo("America/New_York")).replace(microsecond=0).isoformat()
+      raw_sensors_df = raw_sensors_df.with_columns(
+        pl.lit(pulled_at_est).alias("pulled_at_est")
+      )
+
+      # BigQuery column compatibility for selected PurpleAir fields:
+      # replace only '.' with '_' (e.g. pm2.5_atm -> pm2_5_atm)
+      rename_map = {col: col.replace(".", "_") for col in raw_sensors_df.columns if "." in col}
+      if rename_map:
+        raw_sensors_df = raw_sensors_df.rename(rename_map)
+
+      debug_vals = {
+        "api_status_code": response.status_code,
+        "raw_sensor_count": raw_sensors_df.height,
+        "filtered_sensor_count": raw_sensors_df.height,
+      }
+      Kestra.outputs(debug_vals)
+      raw_sensors_df.write_csv(file_name)
+
+  - id: upload_to_gcs
+    type: io.kestra.plugin.gcp.gcs.Upload
+    # The Python script writes vars.file into the task working directory.
+    # Kestra captures it in outputFiles, which we then upload to GCS.
+    from: "{{ outputs.collect_stats.outputFiles['airquality_pull.csv'] }}"
+    to: "{{ render(vars.gcs_file) }}"
+
+  - id: purge_files
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+    description: If you'd like to explore Kestra outputs, disable it.
+    disabled: false
