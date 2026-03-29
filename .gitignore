@@ -233,3 +233,9 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 .terraform*
+
+# dbt
+dbt/**/target/
+dbt/**/dbt_packages/
+dbt/**/logs/
+.dbt/
