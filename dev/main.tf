@@ -34,6 +34,40 @@ resource "google_bigquery_dataset" "test_dataset" {
   location   = "US"
 }
 
+# Recommended datasets for dbt-style layering:
+# - raw: ingestion landing tables
+# - analytics: dbt-built models (staging/marts/aggregates)
+resource "google_bigquery_dataset" "raw" {
+  dataset_id = "raw"
+  location   = "US"
+}
+
+resource "google_bigquery_dataset" "analytics" {
+  dataset_id = "analytics"
+  location   = "US"
+}
+
+# Allow the VM's attached service account (used by Kestra + dbt on the VM)
+# to run BigQuery jobs.
+resource "google_project_iam_member" "kestra_bigquery_job_user" {
+  project = "air-quality-analytics-491022"
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.kestra-svc-acc.email}"
+}
+
+# Allow writes/creates in the raw + analytics datasets.
+resource "google_bigquery_dataset_iam_member" "kestra_raw_data_editor" {
+  dataset_id = google_bigquery_dataset.raw.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = "serviceAccount:${google_service_account.kestra-svc-acc.email}"
+}
+
+resource "google_bigquery_dataset_iam_member" "kestra_analytics_data_editor" {
+  dataset_id = google_bigquery_dataset.analytics.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = "serviceAccount:${google_service_account.kestra-svc-acc.email}"
+}
+
 # Create a VPC network and firewall rule to allow kestra web UI access (port 8080)
 resource "google_compute_network" "vpc_network" {
   name                    = "kestra-network"
@@ -82,7 +116,7 @@ resource "google_compute_instance" "kestra-vm" {
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
-      size = 50
+      size  = 50
     }
   }
 

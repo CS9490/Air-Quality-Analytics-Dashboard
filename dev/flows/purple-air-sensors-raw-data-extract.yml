@@ -7,6 +7,7 @@ variables:
   # Use the execution start time to build the object name
   # NOTE: America/New_York will switch between EST and EDT automatically.
   gcs_file: "{{ 'gs://' ~ kv('GCP_BUCKET_NAME') ~ '/airquality_' ~ (execution.startDate | date(\"MM_dd_yyyy'_T_'HH\", timeZone=\"America/New_York\")) ~ '.csv' }}"
+  bq_destination_table: "{{ kv('GCP_PROJECT_ID') }}.raw.purpleair_sensors"
 
 triggers:
   - id: hourly_on_the_dot
@@ -32,7 +33,6 @@ tasks:
       import polars as pl
       import httpx
       from datetime import datetime, timezone
-      from zoneinfo import ZoneInfo
       
       file_name = "airquality_pull.csv"
       api_key = '{{ kv('PURPLE_AIR_API_KEY') }}'
@@ -83,9 +83,9 @@ tasks:
       #     pl.from_epoch(pl.col("last_seen"), time_unit="s").alias("last_seen")
       #   )
 
-      pulled_at_est = datetime.now(ZoneInfo("America/New_York")).replace(microsecond=0).isoformat()
+      pulled_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
       raw_sensors_df = raw_sensors_df.with_columns(
-        pl.lit(pulled_at_est).alias("pulled_at_est")
+        pl.lit(pulled_at).alias("pulled_at")
       )
 
       # BigQuery column compatibility for selected PurpleAir fields:
@@ -107,6 +107,19 @@ tasks:
     # Kestra captures it in outputFiles, which we then upload to GCS.
     from: "{{ outputs.collect_stats.outputFiles['airquality_pull.csv'] }}"
     to: "{{ render(vars.gcs_file) }}"
+
+  - id: load_to_bigquery_raw
+    type: io.kestra.plugin.gcp.bigquery.LoadFromGcs
+    from:
+      - "{{ render(vars.gcs_file) }}"
+    destinationTable: "{{ render(vars.bq_destination_table) }}"
+    location: "US"
+    format: "CSV"
+    autodetect: true
+    createDisposition: "CREATE_IF_NEEDED"
+    writeDisposition: "WRITE_APPEND"
+    csvOptions:
+      skipLeadingRows: 1
 
   - id: purge_files
     type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
