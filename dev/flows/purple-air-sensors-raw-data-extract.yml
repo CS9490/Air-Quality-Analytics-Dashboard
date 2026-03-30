@@ -97,7 +97,6 @@ tasks:
       debug_vals = {
         "api_status_code": response.status_code,
         "raw_sensor_count": raw_sensors_df.height,
-        "filtered_sensor_count": raw_sensors_df.height,
       }
       Kestra.outputs(debug_vals)
       raw_sensors_df.write_csv(file_name)
