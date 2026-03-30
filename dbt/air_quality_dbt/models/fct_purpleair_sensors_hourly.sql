@@ -1,4 +1,4 @@
-{{
+ {{
   config(
     materialized='table',
     partition_by={
@@ -13,4 +13,3 @@ select
   *,
   date(pulled_hour) as pulled_date
 from {{ ref('int_purpleair_sensors_ts_deduped') }}
-where pulled_hour is not null
