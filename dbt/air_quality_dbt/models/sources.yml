@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: raw
+    database: "{{ target.project }}"
+    schema: raw
+    tables:
+      - name: purpleair_sensors
