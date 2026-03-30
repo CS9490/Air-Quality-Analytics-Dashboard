@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: dim_nyc_boroughs
+    description: "NYC borough boundaries as a dimension table (with BigQuery GEOGRAPHY)."
+    columns:
+      - name: boro_code
+        description: "NYC borough code."
+        tests:
+          - not_null
+          - unique
+      - name: boro_name
+        description: "NYC borough name."

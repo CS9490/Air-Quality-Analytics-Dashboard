@@ -1,0 +1,106 @@
+id: nyc-borough-boundaries-raw-load
+namespace: dashboard_raw_data
+
+description: |
+  Pull NYC borough boundary polygons from NYC Open Data (Socrata) using sodapy,
+  land them in GCS as CSV, and load into BigQuery raw as a replaceable dimension.
+
+variables:
+  socrata_domain: data.cityofnewyork.us
+  # NYC Open Data dataset: "Borough Boundaries" (water areas excluded)
+  socrata_dataset_id: gthc-hcne
+
+  # Use the execution start time to build the object name
+  # NOTE: America/New_York will switch between EST and EDT automatically.
+  gcs_file: "{{ 'gs://' ~ kv('GCP_BUCKET_NAME') ~ '/nyc_borough_boundaries_' ~ (execution.startDate | date(\"MM_dd_yyyy'_T_'HH\", timeZone=\"America/New_York\")) ~ '.csv' }}"
+  bq_destination_table: "{{ kv('GCP_PROJECT_ID') }}.raw.nyc_borough_boundaries"
+
+tasks:
+  - id: extract_borough_boundaries
+    type: io.kestra.plugin.scripts.python.Script
+    outputFiles:
+      - "*.csv"
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: python:slim
+    dependencies:
+      - kestra
+      - polars
+      - sodapy
+    script: |
+      from __future__ import annotations
+
+      import json
+      from datetime import datetime, timezone
+
+      import polars as pl
+      from kestra import Kestra
+      from sodapy import Socrata
+
+      file_name = "nyc_borough_boundaries.csv"
+
+      domain = "{{ vars.socrata_domain }}"
+      dataset_id = "{{ vars.socrata_dataset_id }}"
+
+      # Public dataset; app token is optional.
+      client = Socrata(domain, None, timeout=60)
+
+      rows = client.get(
+        dataset_id,
+        select="borocode, boroname, the_geom",
+        limit=1000,
+      )
+
+      normalized = []
+      for r in rows:
+        the_geom = r.get("the_geom")
+        if isinstance(the_geom, (dict, list)):
+          the_geom_geojson = json.dumps(the_geom)
+        elif isinstance(the_geom, str):
+          the_geom_geojson = the_geom
+        else:
+          the_geom_geojson = None
+
+        normalized.append(
+          {
+            "boro_code": int(r["borocode"]) if r.get("borocode") not in (None, "") else None,
+            "boro_name": r.get("boroname"),
+            # geom comes back as a GeoJSON dict; store as string for BigQuery - itll process this downstream.
+            "the_geom_geojson": the_geom_geojson
+          }
+        )
+
+      df = pl.DataFrame(normalized)
+
+      Kestra.outputs(
+        {
+          "domain": domain,
+          "dataset_id": dataset_id,
+          "row_count": df.height,
+        }
+      )
+
+      df.write_csv(file_name)
+
+  - id: upload_to_gcs
+    type: io.kestra.plugin.gcp.gcs.Upload
+    from: "{{ outputs.extract_borough_boundaries.outputFiles['nyc_borough_boundaries.csv'] }}"
+    to: "{{ render(vars.gcs_file) }}"
+
+  - id: load_to_bigquery_raw
+    type: io.kestra.plugin.gcp.bigquery.LoadFromGcs
+    from:
+      - "{{ render(vars.gcs_file) }}"
+    destinationTable: "{{ render(vars.bq_destination_table) }}"
+    location: "US"
+    format: "CSV"
+    autodetect: true
+    createDisposition: "CREATE_IF_NEEDED"
+    writeDisposition: "WRITE_TRUNCATE"
+    csvOptions:
+      skipLeadingRows: 1
+
+  - id: purge_files
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+    description: If you'd like to explore Kestra outputs, disable it.
+    disabled: false

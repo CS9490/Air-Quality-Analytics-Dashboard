@@ -25,6 +25,10 @@ dedup as (
 )
 
 select
-  * except(_row_number)
+  * except(_row_number),
+  st_geogpoint(
+    safe_cast(longitude as float64),
+    safe_cast(latitude as float64)
+  ) as location_point
 from dedup
 where _row_number = 1
