@@ -1,0 +1,17 @@
+# Copy this file to ...\.dbt\profiles.yml (depending on Mac or Windows)
+#
+# Local auth (recommended for development):
+#   gcloud auth application-default login
+#
+# This profile name must match `profile:` in dbt_project.yml
+
+air_quality_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: air-quality-analytics-491022
+      dataset: analytics
+      location: US
+      threads: 2

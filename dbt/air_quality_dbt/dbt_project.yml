@@ -1,0 +1,19 @@
+name: air_quality_dbt
+version: "1.0.0"
+config-version: 2
+
+# This must match the profile name in ~/.dbt/profiles.yml
+profile: air_quality_dbt
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Default directories
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
