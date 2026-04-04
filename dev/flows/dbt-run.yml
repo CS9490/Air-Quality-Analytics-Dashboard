@@ -1,0 +1,62 @@
+id: dbt-run
+namespace: dashboard_raw_data
+
+description: This flow will pull all dbt files from the repository that is linked to this kestra instance and update the BigQuery data warehouse.
+
+tasks:
+  - id: dbt_build
+    type: io.kestra.plugin.scripts.shell.Commands
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: ghcr.io/dbt-labs/dbt-bigquery:1.8.0
+    interpreter:
+      - bash
+      - -lc
+    env:
+      GCP_PROJECT_ID: "{{ kv('GCP_PROJECT_ID') }}"
+      BQ_LOCATION: "US"
+      DBT_GIT_REPO: "{{ kv('DBT_GIT_REPO') }}"
+      GITHUB_TOKEN: "{{ kv('GITHUB_TOKEN') }}"
+    beforeCommands:
+      - apt-get update
+      - apt-get install -y bash git curl ca-certificates
+    commands:
+      - |
+        set -euo pipefail
+
+        rm -rf repo
+
+        # Clone the private repo using a PAT stored in Kestra KV.
+        BASIC_AUTH=$(python -c "import os,base64; print(base64.b64encode(('x-access-token:' + os.environ['GITHUB_TOKEN']).encode()).decode())")
+        git -c http.extraheader="AUTHORIZATION: basic $BASIC_AUTH" clone --depth 1 "$DBT_GIT_REPO" repo
+
+        cd repo/dbt/air_quality_dbt
+
+        # Keyless GCP auth: mint a short-lived access token from the VM metadata server.
+        ACCESS_TOKEN=$(curl -sS -H "Metadata-Flavor: Google" \
+          "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token" \
+          | python -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
+
+        cat > profiles.yml <<EOF
+        air_quality_dbt:
+          target: prod
+          outputs:
+            prod:
+              type: bigquery
+              method: oauth-secrets
+              project: ${GCP_PROJECT_ID}
+              dataset: analytics
+              location: ${BQ_LOCATION}
+              threads: 4
+              token: ${ACCESS_TOKEN}
+        EOF
+
+        export DBT_PROFILES_DIR="$PWD"
+        dbt debug
+        dbt deps
+        dbt build
+
+  - id: purge_files
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+    description: Kept here just to ensure no obscure files remain (artifacts and such)
+    disabled: false
