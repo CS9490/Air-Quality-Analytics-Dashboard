@@ -12,4 +12,4 @@
 select
   *,
   date(pulled_hour) as pulled_date
-from {{ ref('int_purpleair_sensors_ts_deduped') }}
+from {{ ref('int_purpleair_sensors_ts_mapped_deduped') }}
