@@ -1,0 +1,13 @@
+[project]
+name = "air-quality-analytics-dashboard"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "dbt-bigquery>=1.11.1",
+    "dbt-core>=1.11.8",
+]
