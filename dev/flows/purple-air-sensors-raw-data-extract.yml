@@ -43,15 +43,12 @@ tasks:
         # (Dots in field names like pm2.5_atm are fine for the API call; we normalize dots to underscores before writing the CSV.)
         "fields": (
           "sensor_index,name,latitude,longitude,altitude,"
-          "location_type,private,position_rating,"
-          "last_seen,last_modified,date_created,"
-          "channel_state,channel_flags,channel_flags_manual,channel_flags_auto,"
-          "confidence,confidence_manual,confidence_auto,"
-          "pm1.0_atm,pm2.5_atm,pm2.5_atm_a,pm2.5_atm_b,pm2.5_alt,pm10.0_atm,"
-          "humidity,temperature,pressure,"
-          "rssi,uptime,pa_latency"
+          "location_type,position_rating,"
+          "date_created,last_seen,last_modified,"
+          "confidence,"
+          "pm1.0_atm,pm2.5_atm,pm10.0_atm"
         ),
-        "max_age": 0,
+        "max_age": 1800, # only pull sensors that have been seen in the last 30 mins (1800 seconds) to filter out sensors which haven't been updated with fresh data.
         "nwlat": 40.962891,
         "nwlng": -74.264395,
         "selat": 40.470116,
