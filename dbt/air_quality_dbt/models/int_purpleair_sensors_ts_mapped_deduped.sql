@@ -5,6 +5,7 @@ with hourly as (
     *,
     timestamp_trunc(pulled_at_ts, hour) as pulled_hour
   from {{ ref('stg_purpleair_sensors') }}
+  where location_type = 'Outside'
 ),
 
 dedup as (
