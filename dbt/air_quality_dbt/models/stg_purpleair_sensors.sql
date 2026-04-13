@@ -1,3 +1,14 @@
+ {{
+  config(
+    materialized='table',
+    partition_by={
+      'field': 'pulled_at',
+      'data_type': 'timestamp'
+    },
+    cluster_by=['location_type', 'sensor_index']
+  )
+}}
+
 select
   * except (location_type),
   case when location_type = 0 then 'Outside' else 'Inside' end as location_type,
