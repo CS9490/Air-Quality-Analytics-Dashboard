@@ -21,11 +21,11 @@ group by sensor_index, pulled_hour_est, pulled_date
 )
 
 -- used to map sensors with heatmap style map, but not added to dashboard, so commented out for now
--- select cte.*, 
---   st_geogpoint(
---     safe_cast(fct_sensors.longitude as float64),
---     safe_cast(fct_sensors.latitude as float64)
---   ) as location_point
--- from cte
+select cte.* 
+  -- ,st_geogpoint(
+  --   safe_cast(fct_sensors.longitude as float64),
+  --   safe_cast(fct_sensors.latitude as float64)
+  -- ) as location_point
+from cte
 -- left join {{ ref('fct_sensors') }} fct_sensors
 -- on cte.sensor_index = fct_sensors.sensor_index
