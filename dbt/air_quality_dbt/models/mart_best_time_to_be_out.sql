@@ -11,13 +11,14 @@
 
 with cte as (
   select
-  sensor_index,
+  -- sensor_index,
+  boro_name,
   avg(pm2_5_atm) as avg_pm2_5_atm,
   datetime(pulled_hour, 'America/New_York') as pulled_hour_est,
   date(pulled_hour, 'America/New_York') as pulled_date
 from {{ ref('int_sensors_hourly_with_borough') }}
 where boro_name is not null
-group by sensor_index, pulled_hour_est, pulled_date
+group by boro_name, pulled_hour_est, pulled_date
 )
 
 -- used to map sensors with heatmap style map, but not added to dashboard, so commented out for now
