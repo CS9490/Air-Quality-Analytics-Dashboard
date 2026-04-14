@@ -11,7 +11,7 @@ air_quality_dbt:
     dev:
       type: bigquery
       method: oauth
-      project: air-quality-analytics-491022
+      project: air-quality-analytics-491022 # replace this with your project name
       dataset: analytics
       location: US
       threads: 2
