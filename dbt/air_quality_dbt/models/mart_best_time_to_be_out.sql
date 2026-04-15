@@ -5,13 +5,12 @@
       'field': 'pulled_date',
       'data_type': 'date'
     },
-    cluster_by=['sensor_index']
+    cluster_by=['boro_name']
   )
 }}
 
 with cte as (
   select
-  -- sensor_index,
   boro_name,
   avg(pm2_5_atm) as avg_pm2_5_atm,
   datetime(pulled_hour, 'America/New_York') as pulled_hour_est,
