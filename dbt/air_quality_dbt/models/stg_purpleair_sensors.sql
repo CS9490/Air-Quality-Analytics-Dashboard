@@ -5,7 +5,7 @@
       'field': 'pulled_at_ts',
       'data_type': 'timestamp'
     },
-    cluster_by=['location_type', 'sensor_index']
+    cluster_by=['sensor_index', 'location_type']
   )
 }}
 

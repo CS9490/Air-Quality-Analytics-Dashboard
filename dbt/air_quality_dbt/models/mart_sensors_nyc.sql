@@ -1,22 +1,30 @@
  {{
   config(
     materialized='table',
-    cluster_by=['boro_name']
+    cluster_by=['sensor_index','boro_name']
   )
 }}
 
-with distinct_sensors as (
-    select distinct(sensor_index)
-    from {{ ref('int_sensors_hourly_with_borough') }}
-    where boro_name is not null
+with latest_sensor_rows as (
+  select
+    sensor_index,
+    name,
+    altitude,
+    boro_name,
+    location_point,
+    row_number() over (
+      partition by sensor_index
+      order by pulled_at_ts desc, last_seen_ts desc
+    ) as row_num
+  from {{ ref('int_sensors_hourly_with_borough') }}
+  where boro_name is not null
 )
 
 select
   sensor_index,
-  og.name,
-  og.altitude,
-  og.boro_name,
-  og.location_point
-from distinct_sensors
-left join {{ ref('int_sensors_hourly_with_borough') }} og
-using (sensor_index)
+  name,
+  altitude,
+  boro_name,
+  location_point
+from latest_sensor_rows
+where row_num = 1
