@@ -2,7 +2,7 @@
   config(
     materialized='table',
     partition_by={
-      'field': 'pulled_at',
+      'field': 'pulled_at_ts',
       'data_type': 'timestamp'
     },
     cluster_by=['location_type', 'sensor_index']
