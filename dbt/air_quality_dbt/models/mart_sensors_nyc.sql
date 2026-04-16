@@ -1,7 +1,7 @@
  {{
   config(
     materialized='table',
-    cluster_by=['sensor_index','boro_name']
+    cluster_by=['boro_name','sensor_index']
   )
 }}
 
