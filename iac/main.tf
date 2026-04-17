@@ -4,20 +4,28 @@ terraform {
       source  = "hashicorp/google"
       version = "7.24.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.6.2"
+    }
   }
 }
 
 provider "google" {
-  project = "air-quality-analytics-491022"
-  region  = "us-east1"
+  project = var.project_id
+  region  = var.region
 
-  credentials = file("${path.module}/keys/my-creds.json")
+  credentials = var.credentials_file == null ? null : file(var.credentials_file)
+}
+
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
 }
 
 resource "google_storage_bucket" "raw_data_bucket" {
-  name          = "air-quality-analytics-491022-raw-data-bucket"
-  location      = "US"
-  force_destroy = true
+  name          = "${var.project_id}-raw-data-bucket-${random_id.bucket_suffix.hex}"
+  location      = var.location
+  force_destroy = var.bucket_force_destroy
 
   lifecycle_rule {
     condition {
@@ -29,28 +37,23 @@ resource "google_storage_bucket" "raw_data_bucket" {
   }
 }
 
-resource "google_bigquery_dataset" "test_dataset" {
-  dataset_id = "test_dataset"
-  location   = "US"
-}
-
 # Recommended datasets for dbt-style layering:
 # - raw: ingestion landing tables
 # - analytics: dbt-built models (staging/marts/aggregates)
 resource "google_bigquery_dataset" "raw" {
   dataset_id = "raw"
-  location   = "US"
+  location   = var.location
 }
 
 resource "google_bigquery_dataset" "analytics" {
   dataset_id = "analytics"
-  location   = "US"
+  location   = var.location
 }
 
 # Allow the VM's attached service account (used by Kestra + dbt on the VM)
 # to run BigQuery jobs.
 resource "google_project_iam_member" "kestra_bigquery_job_user" {
-  project = "air-quality-analytics-491022"
+  project = var.project_id
   role    = "roles/bigquery.jobUser"
   member  = "serviceAccount:${google_service_account.kestra-svc-acc.email}"
 }
@@ -108,8 +111,8 @@ resource "google_storage_bucket_iam_member" "kestra_bucket_object_viewer" {
 
 resource "google_compute_instance" "kestra-vm" {
   name         = "kestra-vm-aqd"
-  machine_type = "n2-standard-2"
-  zone         = "us-central1-a"
+  machine_type = var.machine_type
+  zone         = var.zone
 
   tags = ["kestra-server"]
 
