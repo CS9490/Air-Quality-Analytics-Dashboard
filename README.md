@@ -169,37 +169,37 @@ The instructions after this section assume you have the following tools installe
 
 3. **Provision infrastructure:**
 
-    - Please look within the `variables.tf` file and edit the variables to match YOUR project (especially project_id - otherwise `terraform apply` will fail as the default variable there is my own currently used project id). Additionally, within the `docker-compose.yml`, you may change the default Kestra login to whatever you desire, along with the postgres db and pgadmin services.
+    1. Open `iac/variables.tf` and edit the variables to match your GCP project (especially `project_id`).
+    2. **Before deploying:**
+        - Replace all `CHANGE_ME_*` placeholder passwords in `iac/docker-compose.yml` and `iac/install_kestra.sh` with your own secure values. This includes Postgres, pgAdmin, Kestra database, and Kestra admin credentials.
+        - **IMPORTANT:** In `iac/main.tf`, set the `source_ranges` attribute in the `kestra_firewall` resource to your public IPv4 address in `/32` CIDR format. This restricts access to the Kestra instance to only your IP.
+    3. Initialize and apply Terraform:
 
-    *NOTE*: Please be aware that running the docker-compose locally will not fully function as the Kestra instance will run assuming there is a tied up service account that Kestra may use to access your Google Cloud project. 
+        ```
+        cd iac
+        terraform init
+        terraform apply
+        ```
 
-	```
-	cd iac
-	terraform init
-	terraform apply
-	```
+    *NOTE*: Running docker-compose locally will not fully function unless Kestra has access to a valid service account for your Google Cloud project.
 
 4. **Preparing Kestra and flows:**
-    - Wait a few minutes for the Google Cloud VM to spin up Kestra and its other dependencies. Then, once Kestra is spun up, do the following:
-        1. Open the External IP of your VM at port 8080 to get to the Kestra login page and log in with the credentials you saved within `docker-compose.yml`.
-        2. If you're logged in, you're good to go! Next you're going to go to the [PurpleAir developer portal](https://develop.purpleair.com/), make an account, then make a project and finally make a Read key. Copy said key, then go to the KV Store and make a key named `PURPLE_AIR_API_KEY`, placing your new API key into it. Starting out you have a free 1,000,000 points in your account - that should be enough to pull data from PurpleAir for approximately 2 weeks.
-        *NOTE*: Since the IaC creates the `kestra-svc-acc` Google service account, you will not need to create a `GOOGLE_APPLICATION_CREDENTIALS` KV pair since Kestra will use the SVC Account to run dbt.
-        3. Make the following additional KV keys in Kestra within the namespace `dashboard_raw_data`:
-            - `DBT_GIT_REPO`
-                - Push your cloned repository to your github account and put the link to the repo here. For example, my value is `https://github.com/CS9490/Air-Quality-Analytics-Dashboard.git`. This will allow Kestra to run the dbt project within the dbt folder of your repository.
-            - `GCP_BUCKET_NAME`
-                - the full name of the GCP Bucket for your project.
-            - `GCP_LOCATION`
-                - the zone your GCP VM is located in.
-            - `GCP_PROJECT_ID`
-                - your full GCP project ID
-            - `GITHUB_TOKEN`
-                - Assuming your repository is private still, you will need to make a Github access token for your account in order for Kestra to clone in the `dbt` folder contents from the repository and run it after pulling the data from PurpleAir.
-        4. Great, you're almost done now. Go to the `flows` folder of this repository and copy each flow into Kestra.
-        5. Manually run the `nyc-borough-boundaries-raw-load` flow in order to get the borough boundaries data within your Google Cloud project.
-        6. To test it out, run the `purple-air-sensors-raw-data-extract` flow manually once and ensure it runs. It will run every hour on the hour (see the Cron schedule within the flow). With this ran, you should have some data to play with around with in Google Cloud.
-            - *NOTE*: The `dbt-run` flow is only kept to manually run the dbt project from within Kestra. Use it if you made any changes and want to test them before the next `purple-air-sensors-raw-data-extract` run occurs.
-        7. Kestra is now set up. You can let it run the `purple-air-sensors-raw-data-extract` flow and monitor it.
+
+    - Wait a few minutes for the Google Cloud VM to start Kestra and its dependencies. Then:
+        1. Open your VM's External IP at port 8080 to access the Kestra login page. Log in with the credentials you set in `docker-compose.yml`.
+        2. Go to the [PurpleAir developer portal](https://develop.purpleair.com/), create an account, make a project, and generate a Read key. In Kestra, go to the KV Store and add a key named `PURPLE_AIR_API_KEY` with your new API key. (You start with 1,000,000 free points—enough for about 2 weeks of data pulls.)
+            - *NOTE*: Since the IaC creates the `kestra-svc-acc` Google service account, you do **not** need to create a `GOOGLE_APPLICATION_CREDENTIALS` KV pair; Kestra will use the service account for dbt.
+        3. In Kestra, within the `dashboard_raw_data` namespace, add these additional KV keys:
+            - `DBT_GIT_REPO`: URL of your GitHub repo (e.g., `https://github.com/your-username/Air-Quality-Analytics-Dashboard.git`).
+            - `GCP_BUCKET_NAME`: Full name of your GCP bucket.
+            - `GCP_LOCATION`: Zone of your GCP VM.
+            - `GCP_PROJECT_ID`: Your GCP project ID.
+            - `GITHUB_TOKEN`: (If your repo is private) a GitHub access token so Kestra can clone your dbt folder.
+        4. Copy each flow from the `flows` folder of this repo into Kestra.
+        5. Manually run the `nyc-borough-boundaries-raw-load` flow to load borough boundaries data into your GCP project.
+        6. Manually run the `purple-air-sensors-raw-data-extract` flow once to test it. (It will run every hour automatically.)
+            - *NOTE*: The `dbt-run` flow is for manually running the dbt project in Kestra. Use it to test changes before the next scheduled run.
+        7. Kestra is now set up. You can let it run and monitor the `purple-air-sensors-raw-data-extract` flow.
 
 5. **Access the dashboard:**
     - Once you have a days worth of data in your GCP Bucket and Big Query, you can make the dashboard yourself if you choose to. You have the choice of either copying the one I created or attempting to make it yourself! It is much easier if you make a copy and simply replace the data sources yourself.
