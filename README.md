@@ -104,6 +104,26 @@ The dashboard is built in **Looker Studio** (Google Data Studio) and is directly
 
 Users can filter by borough, date range, and sensor.
 
+### Dashboard Preview
+
+The screenshots below show static previews of the live dashboard views available in Looker Studio (recently named back to Data Studio).
+
+**Tile 1: Average hourly PM concentrations by borough**
+
+![Tile 1 - Average hourly PM concentrations by borough](pictures/Tile1.png)
+
+**Tile 2: Best and worst times to be outside**
+
+![Tile 2 - Best and worst times to be outside](pictures/Tile2.png)
+
+**Tile 3: Sensor distribution by borough**
+
+![Tile 3 - Sensor distribution by borough](pictures/Tile3.png)
+
+**Map and table: Sensor locations and details**
+
+![Tile 4 - Sensor locations and details](pictures/Tile4.png)
+
 **How to access:**
 Please go to the link here for the dashboard: [Air Quality in NYC](https://datastudio.google.com/u/0/reporting/83b8ded9-d636-4757-9621-51fc4c99688f/page/KgtuF)
 
