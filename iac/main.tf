@@ -87,7 +87,7 @@ resource "google_compute_firewall" "kestra_firewall" {
   }
 
   target_tags   = ["kestra-server"]
-  source_ranges = ["0.0.0.0/0"] # Be more restrictive in production, just testing now
+  source_ranges = ["0.0.0.0/0"] # Be more restrictive if possible as opposed to allowing all IPs to access- my recommendation is to use your public IP address here so you may only connect using devices linked to said IP.
 }
 
 resource "google_service_account" "kestra-svc-acc" {

@@ -1,5 +1,5 @@
 volumes:
-  ny_taxi_postgres_data:
+  airquality_data:
     driver: local
   kestra_postgres_data:
     driver: local
@@ -14,11 +14,11 @@ services:
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
-      POSTGRES_DB: ny_taxi
+      POSTGRES_DB: airquality
     ports:
       - "5432:5432"
     volumes:
-      - ny_taxi_postgres_data:/var/lib/postgresql
+      - airquality_data:/var/lib/postgresql
     depends_on:
       kestra:
         condition: service_started
@@ -51,9 +51,6 @@ services:
   kestra:
     image: kestra/kestra:v1.1
     pull_policy: always
-    # Note that this setup with a root user is intended for development purpose.
-    # Our base image runs without root, but the Docker Compose implementation needs root to access the Docker socket
-    # To run Kestra in a rootless mode in production, see: https://kestra.io/docs/installation/podman-compose
     user: "root"
     command: server standalone
     volumes:
