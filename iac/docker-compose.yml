@@ -69,7 +69,7 @@ services:
           server:
             basicAuth:
               username: "admin@kestra.io" # it must be a valid email address
-              password: CHANGE_ME_KESTRA_ADMIN_PASSWORD
+              password: CHANGE_ME_KESTRA_ADMIN_PASSWORD # REQUIREMENTS: at least one uppercase letter, at least one lowercase letter, at least one number, at least one special character, at least 8 characters long
           repository:
             type: postgres
           storage:
