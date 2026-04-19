@@ -207,9 +207,4 @@ The instructions after this section assume you have the following tools installe
 
 ---
 
-## Notes for Reviewers
-
-- All code and configs are included in this repo.
-- No hardcoded local paths; all credentials and project IDs are parameterized.
-- dbt models are partitioned and clustered to match dashboard query patterns.
-- Please see the dashboard for interactive exploration and insights.
+Project by Cristian Statescu ([CS9490 on GitHub](https://github.com/CS9490))
