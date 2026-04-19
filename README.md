@@ -57,12 +57,12 @@ Partitioning and clustering choices for each major table:
 - **mart_avg_hourly_per_borough**
   - Partitioned by: `pulled_date` (date)
   - Clustered by: `boro_name`
-  - Rationale: Partitioning by date for time-series analysis in dashboard tile showing all PM types (1.0, 2.5, and 10.0); clustering by borough (commonly used filter column in the dashboard) for dashboard queries and grouping.
+    - Rationale: Partitioning by date for time-series analysis in dashboard tile showing all PM types (1.0, 2.5, and 10.0); clustering by borough (commonly used filter column in the dashboard) for dashboard queries and grouping. The model also stores `sensor_count` so Looker Studio can compute weighted rollups correctly (due to various different sensor counts per borough).
 
 - **mart_best_time_to_be_out**
   - Partitioned by: `pulled_date` (date)
   - Clustered by: `boro_name`
-  - Rationale: Partitioning by date for time-based queries and analysis in dashboard tile showing best time to be out based on the Moderate Air Quality Threshold; clustering by borough for dashboard use (commonly used filter column in the dashboard).
+    - Rationale: Partitioning by date for time-based queries and analysis in dashboard tile showing best time to be out based on the Moderate Air Quality Threshold; clustering by borough for dashboard use (commonly used filter column in the dashboard). The model also stores `sensor_count` so Looker Studio can compute weighted rollups correctly (due to various different sensor counts per borough).
 
 - **mart_sensors_nyc**
   - Not partitioned
@@ -87,8 +87,8 @@ Partitioning and clustering choices for each major table:
 	- `int_sensors_hourly_with_borough` enriches those cleaned hourly sensor readings by joining them to NYC borough boundaries using geospatial logic, so each observation can be analyzed geographically in downstream marts.
 
 - **Mart Models:**  
-	- `mart_avg_hourly_per_borough` aggregates PM1.0, PM2.5, and PM10.0 readings to the borough-hour grain. This mart powers the dashboard tile that shows how average pollution levels change throughout the day for each borough.
-	- `mart_best_time_to_be_out` focuses on PM2.5 at the borough-hour grain and is used for the dashboard tile that highlights cleaner versus less favorable times to be outside relative to a moderate air quality threshold.
+    - `mart_avg_hourly_per_borough` aggregates PM1.0, PM2.5, and PM10.0 readings to the borough-hour grain and includes `sensor_count` for each borough-hour-date combination. This mart powers the dashboard tile that shows how average pollution levels change throughout the day for each borough and has weighted rollups in Looker Studio when more than one borough is selected.
+    - `mart_best_time_to_be_out` focuses on PM2.5 at the borough-hour grain and also includes `sensor_count` for each borough-hour-date combination. It is used for the dashboard tile that highlights cleaner versus less favorable times to be outside relative to a moderate air quality threshold and supports weighted rollups in Looker Studio when more than one borough is selected.
 	- `mart_sensors_nyc` stores one latest-known row per sensor, including borough, sensor metadata, and geographic point location. This mart powers the sensor distribution chart, the map visualization, and the detailed sensor lookup table in the dashboard.
 
 ---
