@@ -135,7 +135,7 @@ Please go to the link here for the dashboard: [Air Quality in NYC](https://datas
 
 The instructions after this section assume you have the following tools installed/accounts set up.
 
-- UV (Python package and manager)
+- UV (Python package and project manager) or Python 3.9+ - optional, but if you wish to run the notebook in the `dev` folder, having one of these will come in handy.
 - dbt (this should be installed with the BigQuery adapter `dbt-bigquery` as the project uses BigQuery)
 - GCP account & Project (named however you'd like it to be named)
 - Terraform (to provision infra)
