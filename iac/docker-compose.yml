@@ -9,20 +9,6 @@ volumes:
     driver: local
 
 services:
-  pgdatabase:
-    image: postgres:18
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: CHANGE_ME_PG_PASSWORD
-      POSTGRES_DB: airquality
-    ports:
-      - "5432:5432"
-    volumes:
-      - airquality_data:/var/lib/postgresql
-    depends_on:
-      kestra:
-        condition: service_started
-
   pgadmin:
     image: dpage/pgadmin4
     environment:
