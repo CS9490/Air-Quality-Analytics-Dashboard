@@ -97,7 +97,7 @@ Partitioning and clustering choices for each major table:
 ## Dashboard
 
 The dashboard is built in **Looker Studio** (Google Data Studio) and is directly connected to the BigQuery warehouse. It provides:
-- **Tile 1:** Average hourly PM 1.0, 2.5, and 10.0 concentrations (time series bar chart).
+- **Tile 1:** Typical hourly PM 1.0, PM2.5, and PM10.0 concentrations by selected borough(s) (time series bar chart).
 - **Tile 2:** Best and Worst Times to Be Outside (PM2.5 Levels - most critical air pollutant for lung health according to USEPA) with threshold of 'moderate air quality' (helpful to see when air quality is at a good level).
 - **Tile 3:** Distribution of selected air quality sensors by borough (categorical pie chart) - (without filters, shows distribution of all air quality sensors by borough since all sensors are selected).
 - **Map/Table:** Interactive map and table of sensor IDs, names, and altitudes at which they are placed.
@@ -108,21 +108,21 @@ Users can filter by borough, date range, and sensor.
 
 The screenshots below show static previews of the live dashboard views available in Looker Studio (recently named back to Data Studio).
 
-**Tile 1: Average hourly PM concentrations by borough**
+**Tile 1: Typical Hourly PM Concentrations by Selected Borough(s)**
 
-![Tile 1 - Average hourly PM concentrations by borough](pictures/Tile1.png)
+![Tile 1 - Typical Hourly PM Concentrations by Selected Borough(s)](pictures/Tile1.png)
 
-**Tile 2: Best and worst times to be outside**
+**Tile 2: Best and Worst Times to be Outside**
 
-![Tile 2 - Best and worst times to be outside](pictures/Tile2.png)
+![Tile 2 - Best and Worst Times to be Outside (PM2.5)](pictures/Tile2.png)
 
-**Tile 3: Sensor distribution by borough**
+**Tile 3: Distribution of Selected Air Quality Sensors by Borough**
 
-![Tile 3 - Sensor distribution by borough](pictures/Tile3.png)
+![Tile 3 - Distribution of Selected Air Quality Sensors by Borough](pictures/Tile3.png)
 
 **Map and table: Sensor locations and details**
 
-![Tile 4 - Sensor locations and details](pictures/Tile4.png)
+![Tile 4 - Sensor Locations and Details](pictures/Tile4.png)
 
 **How to access:**
 Please go to the link here for the dashboard: [Air Quality in NYC](https://datastudio.google.com/u/0/reporting/83b8ded9-d636-4757-9621-51fc4c99688f/page/KgtuF)
