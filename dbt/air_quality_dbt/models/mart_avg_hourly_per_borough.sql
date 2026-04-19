@@ -13,6 +13,7 @@ select
   boro_name,
   datetime(pulled_hour, 'America/New_York') as pulled_hour_est,
   date(pulled_hour, 'America/New_York') as pulled_date,
+  count(distinct sensor_index) as sensor_count,
   avg(pm1_0_atm) as avg_pm1_0_atm,
   avg(pm2_5_atm) as avg_pm2_5_atm,
   avg(pm10_0_atm) as avg_pm10_0_atm

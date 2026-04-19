@@ -11,6 +11,7 @@
 
 select
   boro_name,
+  count(distinct sensor_index) as sensor_count,
   avg(pm2_5_atm) as avg_pm2_5_atm,
   datetime(pulled_hour, 'America/New_York') as pulled_hour_est,
   date(pulled_hour, 'America/New_York') as pulled_date
