@@ -1,6 +1,4 @@
 volumes:
-  airquality_data:
-    driver: local
   kestra_postgres_data:
     driver: local
   kestra_data:
@@ -16,9 +14,6 @@ services:
       - PGADMIN_DEFAULT_PASSWORD=CHANGE_ME_PGADMIN_PASSWORD
     ports:
       - "8085:80"
-    depends_on:
-      pgdatabase:
-        condition: service_started
 
   kestra_postgres:
     image: postgres:18
