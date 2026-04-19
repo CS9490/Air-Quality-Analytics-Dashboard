@@ -22,6 +22,13 @@ resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
+resource "terraform_data" "kestra_startup_script" {
+  input = {
+    startup_script = filemd5("install_kestra.sh")
+    docker_compose = filemd5("docker-compose.yml")
+  }
+}
+
 resource "google_storage_bucket" "raw_data_bucket" {
   name          = "${var.project_id}-raw-data-bucket-${random_id.bucket_suffix.hex}"
   location      = var.location
@@ -114,6 +121,10 @@ resource "google_compute_instance" "kestra-vm" {
   machine_type = var.machine_type
   zone         = var.zone
 
+  lifecycle {
+    replace_triggered_by = [terraform_data.kestra_startup_script]
+  }
+
   tags = ["kestra-server"]
 
   boot_disk {
@@ -136,7 +147,9 @@ resource "google_compute_instance" "kestra-vm" {
     }
   }
 
-  metadata_startup_script = file("install_kestra.sh")
+  metadata_startup_script = templatefile("install_kestra.sh", {
+    docker_compose = file("docker-compose.yml")
+  })
 
   service_account {
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.

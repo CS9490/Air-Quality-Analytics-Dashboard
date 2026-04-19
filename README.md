@@ -169,10 +169,11 @@ The instructions after this section assume you have the following tools installe
 
 3. **Provision infrastructure:**
 
-    1. Open `iac/variables.tf` and edit the variables to match your GCP project (especially `project_id`).
+    1. Open `iac/variables.tf` and edit the variables to match your GCP project.
     2. **Before deploying:**
         - Replace all `CHANGE_ME_*` placeholder passwords in `iac/docker-compose.yml` and `iac/install_kestra.sh` with your own secure values. This includes Postgres, pgAdmin, Kestra database, and Kestra admin credentials.
         - **IMPORTANT:** In `iac/main.tf`, set the `source_ranges` attribute in the `kestra_firewall` resource to your public IPv4 address in `/32` CIDR format. This restricts access to the Kestra instance to only your IP.
+        - Additionally, ensure you enable the Identity and Access Management (IAM) API, the Cloud Resource Manager API, as well as Compute Engine for the project. Otherwise `terraform apply` will fail. If any other errors arise, look at the terraform errors - often terraform will tell you what else needs to be activated before terraform can provision your project fully.
     3. Initialize and apply Terraform:
 
         ```

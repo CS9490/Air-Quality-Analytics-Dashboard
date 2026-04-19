@@ -2,7 +2,7 @@ variable "project_id" {
   description = "The GCP project ID"
   type        = string
   # Replace with your project ID
-  default = "air-quality-analytics-491022"
+  default = "test-air-quality-analytics"
 }
 
 variable "region" {
